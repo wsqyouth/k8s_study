@@ -1,0 +1,44 @@
+# coopers @ 2024-07
+# kubectl apply -f wordpress-pod.yml  # 第三步: 这里使用的 IP 地址是 maria-pod 的 IP 地址 10.42.0.44
+# kubectl delete -f wordpress-pod.yml
+# kubectl get pod -o wide    # 第四步: 查看 wordpress-pod 的 IP 地址 10.42.0.45
+# 注:http://127.0.0.1:8080/ 我直接访问都可以了，不过为了项目完整性，添加一个 nginx 的 docker 测试下反向代理功能
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: wp-cm
+
+data:
+  HOST: '10.42.0.44'
+  USER: 'wp'
+  PASSWORD: '123'
+  NAME: 'db'
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: wp-pod
+  labels:
+    app: wordpress
+    role: website
+
+spec:
+  containers:
+  - image: wordpress:5
+    name: wp-pod
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort: 80
+
+    envFrom:
+    - prefix: 'WORDPRESS_DB_'
+      configMapRef:
+        name: wp-cm
+
+
+## 测试验证:
+```
+kubectl exec -it wp-pod -- /bin/bash
+curl http://127.0.0.1:80 -I
+```
